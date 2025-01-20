@@ -1,13 +1,12 @@
 : '
-Run RunSpecs in parallel by models using helm-run. To bypass the proxy server
-and run in root mode, append --local.
+Run RunSpecs in parallel by models using helm-run.
 
 Usage:
 
   bash scripts/helm-run-all.sh <Any additional CLI arguments for helm-run>
 
   e.g.,
-  bash scripts/helm-run-all.sh --suite <Name of suite> --max-eval-instances 1000 --num-threads 1 --priority 2 --local
+  bash scripts/helm-run-all.sh --suite <Name of suite> --max-eval-instances 1000 --num-threads 1 --priority 2
 
 To kill a running process:
 
@@ -48,6 +47,8 @@ models=(
   "together/glm"
   "together/gpt-j-6b"
   "together/gpt-neox-20b"
+  "together/opt-1.3b"
+  "together/opt-6.7b"
   "together/opt-66b"
   "together/opt-175b"
   "together/t0pp"
@@ -66,7 +67,7 @@ do
     logfile="${logfile// /_}"   # Replace spaces
 
     # Override with passed-in CLI arguments
-    # By default, the command will run the RunSpecs listed in src/helm/benchmark/presentation/run_specs.conf
+    # By default, the command will run the RunSpecs listed in src/helm/benchmark/presentation/run_entries.conf
     # and output results to `benchmark_output/runs/<Today's date e.g., 06-28-2022>`.
     execute "helm-run --models-to-run $model $* &> $logfile.log &"
 done

@@ -67,7 +67,17 @@ from copy import copy
 from typing import List, Dict, Literal, Tuple
 from dataclasses import dataclass
 
-from .scenario import Scenario, Instance, Reference, TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT, CORRECT_TAG, Input, Output
+from helm.benchmark.scenarios.scenario import (
+    Scenario,
+    Instance,
+    Reference,
+    TRAIN_SPLIT,
+    VALID_SPLIT,
+    TEST_SPLIT,
+    CORRECT_TAG,
+    Input,
+    Output,
+)
 
 
 @dataclass(frozen=True)
@@ -352,7 +362,7 @@ class SRNScenario(Scenario):
         )
         return rules, test_fact, test_rules_used, target_fact
 
-    def get_instances(self) -> List[Instance]:
+    def get_instances(self, output_path: str) -> List[Instance]:
         # Read all the instances
         instances: List[Instance] = []
         random.seed(self.random_seed)

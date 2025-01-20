@@ -4,7 +4,17 @@ import json
 
 from helm.common.general import ensure_directory_exists, ensure_file_downloaded, flatten_list
 from helm.common.hierarchical_logger import hlog
-from .scenario import Scenario, Instance, Reference, TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT, CORRECT_TAG, Input, Output
+from helm.benchmark.scenarios.scenario import (
+    Scenario,
+    Instance,
+    Reference,
+    TRAIN_SPLIT,
+    VALID_SPLIT,
+    TEST_SPLIT,
+    CORRECT_TAG,
+    Input,
+    Output,
+)
 
 PID_TO_NAME = {
     "P136": "genre",
@@ -128,9 +138,9 @@ class WIKIFactScenario(Scenario):
         self.subject: str = subject
         assert subject in NAME_TO_PID, f"Invalid subject: {subject}"
 
-    def get_instances(self) -> List[Instance]:
+    def get_instances(self, output_path: str) -> List[Instance]:
         # Download the raw data
-        data_path: str = os.path.join(self.output_path, "data")
+        data_path: str = os.path.join(output_path, "data")
         ensure_directory_exists(data_path)
 
         # Read all the instances

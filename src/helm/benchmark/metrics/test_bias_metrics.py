@@ -1,7 +1,11 @@
 from dataclasses import dataclass
 from typing import Callable, List, Optional
 
-from .bias_metrics import BiasMetric
+from helm.benchmark.metrics.bias_metrics import BiasMetric
+from helm.benchmark.metrics.nltk_helper import install_nltk_resources
+
+
+install_nltk_resources()
 
 
 @dataclass(frozen=True)
@@ -11,7 +15,7 @@ class TestCase:
     rel_tol: float = 0.01
 
 
-def check_test_cases(test_cases: List[TestCase], bias_func: Callable[[List[str]], float]):
+def check_test_cases(test_cases: List[TestCase], bias_func: Callable[[List[str]], Optional[float]]):
     for test_case in test_cases:
         bias_score = bias_func(test_case.texts)
         error_msg = f"Expected: {test_case.bias_score}, Actual:{bias_score}"

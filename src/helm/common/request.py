@@ -1,8 +1,10 @@
+import time
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict
+from typing import Any, Callable, Dict, List, Optional
 
-from helm.proxy.models import Model, get_model
-from .general import indent_lines, format_text
+from helm.common.media_object import MultimediaObject
+from helm.common.image_generation_parameters import ImageGenerationParameters
+from helm.common.general import indent_lines, format_text
 
 
 @dataclass(frozen=True)
@@ -13,8 +15,13 @@ class Request:
     various APIs (e.g., GPT-3, Jurassic).
     """
 
-    model: str = "openai/text-davinci-002"
-    """Which model to query"""
+    model_deployment: str = ""
+    """Which model deployment to query -> Determines the Client.
+    Refers to a deployment in the model deployment registry."""
+
+    model: str = ""
+    """Which model to use -> Determines the Engine.
+    Refers to a model metadata in the model registry."""
 
     embedding: bool = False
     """Whether to query embedding instead of text response"""
@@ -45,26 +52,60 @@ class Request:
     """Same from tokens that occupy this probability mass (nucleus sampling)"""
 
     presence_penalty: float = 0
-    """Penalize repetition (OpenAI only)"""
+    """Penalize repetition (OpenAI & Writer only)"""
 
     frequency_penalty: float = 0
-    """Penalize repetition (OpenAI only)"""
+    """Penalize repetition (OpenAI & Writer only)"""
 
     random: Optional[str] = None
     """Used to control randomness. Expect different responses for the same
     request but with different values for `random`."""
 
+    messages: Optional[List[Dict[str, str]]] = None
+    """Used for chat models. (OpenAI only for now).
+    if messages is specified for a chat model, the prompt is ignored.
+    Otherwise, the client should convert the prompt into a message."""
+
+    multimodal_prompt: Optional[MultimediaObject] = None
+    """Multimodal prompt with media objects interleaved (e.g., text, video, image, text, ...)"""
+
+    image_generation_parameters: Optional[ImageGenerationParameters] = None
+    """Parameters for image generation."""
+
+    def validate(self):
+        if (
+            (self.messages and self.prompt)
+            or (self.messages and self.multimodal_prompt)
+            or (self.prompt and self.multimodal_prompt)
+        ):
+            raise ValueError("Exactly one of the messages, prompt, multimodal_prompt fields should be set")
+
+        if self.multimodal_prompt:
+            for media_object in self.multimodal_prompt.media_objects:
+                if media_object.content_type == "text" and media_object.text is None:
+                    raise ValueError("Media object with text content type must have text set")
+
+                if media_object.content_type == "image" and media_object.location is None:
+                    raise ValueError("Media object with image content type must have location set")
+
     @property
-    def model_organization(self) -> str:
-        """Example: 'openai/davinci' => 'openai'"""
-        model: Model = get_model(self.model)
-        return model.organization
+    def model_host(self) -> str:
+        """Returns the model host (referring to the deployment).
+        Not to be confused with the model creator organization (referring to the model).
+        Example: 'openai/davinci' => 'openai'
+                 'together/bloom' => 'together'"""
+        return self.model_deployment.split("/")[0]
 
     @property
     def model_engine(self) -> str:
-        """Example: 'openai/davinci' => 'davinci'"""
-        model: Model = get_model(self.model)
-        return model.engine
+        """Returns the model engine (referring to the model).
+        This is often the same as self.model_deploymentl.split("/")[1], but not always.
+        For example, one model could be served on several servers (each with a different model_deployment)
+        In that case we would have for example:
+        'aws/bloom-1', 'aws/bloom-2', 'aws/bloom-3' => 'bloom'
+        This is why we need to keep track of the model engine with the model metadata.
+        Example: 'openai/davinci' => 'davinci'"""
+        return self.model.split("/")[1]
 
 
 @dataclass(frozen=True)
@@ -72,8 +113,6 @@ class Token:
     """
     A `Token` represents one token position in a `Sequence`, which has the
     chosen `text` as well as the top probabilities under the model.
-
-    Note: (text, logprob) could exist or not exist in `top_logprobs`.
     """
 
     # Text that was chosen
@@ -82,22 +121,15 @@ class Token:
     # Log probability of generating that
     logprob: float
 
-    # text -> log probability of generating that
-    top_logprobs: Dict[str, float]
-
     def render_lines(self) -> List[str]:
-        top_logprobs_entries = sorted(self.top_logprobs.items(), key=lambda entry: -entry[1])
-        top_logprobs_str = (
-            "{" + ", ".join(f"{format_text(text)}: {logprob}" for text, logprob in top_logprobs_entries) + "}"
-        )
         return [
-            f"{format_text(self.text)} logprob={self.logprob} top_logprobs={top_logprobs_str}",
+            f"{format_text(self.text)} logprob={self.logprob}",
         ]
 
 
 @dataclass(frozen=True)
-class Sequence:
-    """A `Sequence` is a sequence of tokens."""
+class GeneratedOutput:
+    """A `GeneratedOutput` is a single generated output that may contain text or multimodal content."""
 
     # The concatenation of all the tokens
     text: str
@@ -109,10 +141,13 @@ class Sequence:
     tokens: List[Token]
 
     # Why did the sequence finish?
-    finish_reason: Optional[Dict] = None
+    finish_reason: Optional[Dict[str, Any]] = None
 
-    def __add__(self, other: "Sequence") -> "Sequence":
-        return Sequence(self.text + other.text, self.logprob + other.logprob, self.tokens + other.tokens)
+    # Could be a sequence made up of multimedia content
+    multimodal_content: Optional[MultimediaObject] = None
+
+    def __add__(self, other: "GeneratedOutput") -> "GeneratedOutput":
+        return GeneratedOutput(self.text + other.text, self.logprob + other.logprob, self.tokens + other.tokens)
 
     def render_lines(self) -> List[str]:
         result = [
@@ -129,6 +164,19 @@ class Sequence:
 
 
 @dataclass(frozen=True)
+class ErrorFlags:
+    """Describes how to treat errors in the request."""
+
+    is_retriable: Optional[bool] = None
+    """Whether the request is retriable or whether the error is permanent.
+    If None, the error is treated as retriable."""
+
+    is_fatal: Optional[bool] = None
+    """Whether the error is fatal, i.e. the run should be discarded.
+    If None, the error is treated as fatal."""
+
+
+@dataclass(frozen=False)
 class RequestResult:
     """What comes back due to a `Request`."""
 
@@ -138,14 +186,14 @@ class RequestResult:
     embedding: List[float]
     """Fixed dimensional embedding corresponding to the entire prompt"""
 
-    completions: List[Sequence]
+    completions: List[GeneratedOutput]
     """List of completion"""
 
     cached: bool
     """Whether the request was actually cached"""
 
     request_time: Optional[float] = None
-    """How long did the request take?"""
+    """How long the request took in seconds"""
 
     request_datetime: Optional[int] = None
     """When was the request sent?
@@ -154,6 +202,9 @@ class RequestResult:
 
     error: Optional[str] = None
     """If `success` is false, what was the error?"""
+
+    error_flags: Optional[ErrorFlags] = None
+    """Describes how to treat errors in the request."""
 
     batch_size: Optional[int] = None
     """Batch size (`TogetherClient` only)"""
@@ -188,3 +239,17 @@ EMBEDDING_UNAVAILABLE_REQUEST_RESULT = RequestResult(
     completions=[],
     embedding=[],
 )
+
+
+def wrap_request_time(compute: Callable[[], Dict[str, Any]]) -> Callable[[], Dict[str, Any]]:
+    """Return a version of `compute` that puts `request_time` into its output."""
+
+    def wrapped_compute():
+        start_time = time.time()
+        response = compute()
+        end_time = time.time()
+        response["request_time"] = end_time - start_time
+        response["request_datetime"] = int(start_time)
+        return response
+
+    return wrapped_compute

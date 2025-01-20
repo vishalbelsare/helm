@@ -3,7 +3,16 @@ import os
 from typing import Dict, List
 
 from helm.common.general import ensure_file_downloaded
-from .scenario import Scenario, Instance, Reference, CORRECT_TAG, TRAIN_SPLIT, VALID_SPLIT, Input, Output
+from helm.benchmark.scenarios.scenario import (
+    Scenario,
+    Instance,
+    Reference,
+    CORRECT_TAG,
+    TRAIN_SPLIT,
+    VALID_SPLIT,
+    Input,
+    Output,
+)
 
 
 class MedMCQAScenario(Scenario):
@@ -63,8 +72,8 @@ class MedMCQAScenario(Scenario):
     )
     tags = ["question_answering", "biomedical"]
 
-    def get_instances(self) -> List[Instance]:
-        data_path: str = os.path.join(self.output_path, "data")
+    def get_instances(self, output_path: str) -> List[Instance]:
+        data_path: str = os.path.join(output_path, "data")
         ensure_file_downloaded(
             source_url=self.DATASET_DOWNLOAD_URL,
             target_path=data_path,

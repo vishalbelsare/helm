@@ -5,7 +5,17 @@ from typing import List, Dict
 from urllib.parse import urljoin
 
 from helm.common.general import ensure_directory_exists, ensure_file_downloaded
-from .scenario import Scenario, Instance, Reference, Input, CORRECT_TAG, TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT, Output
+from helm.benchmark.scenarios.scenario import (
+    Scenario,
+    Instance,
+    Reference,
+    Input,
+    CORRECT_TAG,
+    TRAIN_SPLIT,
+    VALID_SPLIT,
+    TEST_SPLIT,
+    Output,
+)
 
 
 class BIGBenchScenario(Scenario):
@@ -76,11 +86,11 @@ class BIGBenchScenario(Scenario):
         self.task: str = task
         self.subtask: str = subtask
 
-    def get_instances(self) -> List[Instance]:
+    def get_instances(self, output_path: str) -> List[Instance]:
         """
         Construct `Instance`s using the examples from the BIG-bench task.
         """
-        big_bench_task: Dict = BIGBenchScenario.download_and_get_task(self.output_path, self.task, self.subtask)
+        big_bench_task: Dict = BIGBenchScenario.download_and_get_task(output_path, self.task, self.subtask)
 
         # From https://github.com/google/BIG-bench/blob/main/docs/doc.md#json-schema,
         # "keywords", "description" and "examples" are all required fields for a BIG-bench task.

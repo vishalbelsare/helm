@@ -11,10 +11,17 @@ benchmark_output
 www
 proxy_api_key*.txt
 microsoft_client.lock
+*.lock
 *.log
 *.out
 *.jsonl
 nltk_data/
+
+# MechanicalTurkCritiqueClient
+mturk/
+
+# SlurmRunner
+slurm/
 
 # Where data lives (e.g., newsqa)
 restricted
@@ -24,6 +31,10 @@ rc
 nav
 tags
 notes.otl
+
+# HELM config files
+/run_entries*.conf
+/schema*.yaml
 
 # For Macs
 .DS_Store
@@ -37,3 +48,5 @@ notes.otl
 
 # Miscellaneous
 .nfs*
+
+node_modules

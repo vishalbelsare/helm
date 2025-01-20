@@ -1,11 +1,12 @@
+# mypy: check_untyped_defs = False
 from typing import Dict
 import re
 
 from random import Random
 
 from helm.common.general import match_case
-from .perturbation import Perturbation
-from .perturbation_description import PerturbationDescription
+from helm.benchmark.augmentations.perturbation import TextPerturbation
+from helm.benchmark.augmentations.perturbation_description import PerturbationDescription
 
 
 CONTRACTION_MAP: Dict[str, str] = {
@@ -91,7 +92,7 @@ CONTRACTION_MAP: Dict[str, str] = {
 
 # The implementations below are based on
 # https://github.com/GEM-benchmark/NL-Augmenter/blob/main/transformations/contraction_expansions/transformation.py
-class ContractionPerturbation(Perturbation):
+class ContractionPerturbation(TextPerturbation):
     """
     Contractions.
     Replaces each expansion with its contracted version.
@@ -131,7 +132,7 @@ class ContractionPerturbation(Perturbation):
         return self.reverse_contraction_pattern.sub(cont, text)
 
 
-class ExpansionPerturbation(Perturbation):
+class ExpansionPerturbation(TextPerturbation):
     """
     Expansions.
     Replaces each contraction with its expanded version.

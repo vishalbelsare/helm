@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .adapter_spec import Substitution
+from helm.benchmark.adaptation.adapter_spec import Substitution
 
 
 @dataclass(frozen=True)
@@ -11,6 +11,9 @@ class Prompt:
 
     # Global prefix, carried over from `AdapterSpec`
     global_prefix: str
+
+    # Global suffix, carried over from `AdapterSpec`
+    global_suffix: str
 
     # Instance prefix, carried over from `AdapterSpec`
     instance_prefix: str
@@ -47,7 +50,10 @@ class Prompt:
 
         # Note: this could be implemented via substitutions.
         if self.global_prefix:
-            non_truncated_text = f"{self.global_prefix} {non_truncated_text}"
+            non_truncated_text = f"{self.global_prefix}{non_truncated_text}"
+
+        if self.global_suffix:
+            non_truncated_text = f"{non_truncated_text}{self.global_suffix}"
 
         # Perform substitutions (e.g., add "<br>" before "\n")
         for subst in self.substitutions:

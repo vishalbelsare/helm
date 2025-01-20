@@ -6,7 +6,18 @@ from typing import Dict, List, Optional
 
 from helm.common.general import ensure_file_downloaded
 from helm.common.hierarchical_logger import hlog
-from .scenario import Scenario, Instance, Reference, TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT, CORRECT_TAG, Input, Output
+from helm.benchmark.runner import get_benchmark_output_path
+from helm.benchmark.scenarios.scenario import (
+    Scenario,
+    Instance,
+    Reference,
+    TRAIN_SPLIT,
+    VALID_SPLIT,
+    TEST_SPLIT,
+    CORRECT_TAG,
+    Input,
+    Output,
+)
 
 
 @dataclass(frozen=True)
@@ -43,9 +54,9 @@ class EmpatheticDialoguesScenario(Scenario):
         super().__init__()
         pass
 
-    def download_data(self):
+    def download_data(self, output_path: str):
         # Download the raw data
-        self.data_path: str = os.path.join(self.output_path, "data")
+        self.data_path: str = os.path.join(output_path, "data")
         ensure_file_downloaded(
             source_url="https://dl.fbaipublicfiles.com/parlai/empatheticdialogues/empatheticdialogues.tar.gz",
             target_path=self.data_path,
@@ -79,7 +90,6 @@ class EmpatheticDialoguesScenario(Scenario):
             # Group rows by prompts, each group corresponds to an instance
             grouped_data_df = data_df.groupby(by=["prompt", "context"])
             for prompt_cols, prompt_df in grouped_data_df:
-
                 # Group rows by conversations, each group corresponds to a reference
                 grouped_prompt_df = prompt_df.groupby(["conv_id", "selfeval"])
                 references = []
@@ -132,13 +142,12 @@ class EmpatheticDialoguesScenario(Scenario):
 
         return instances
 
-    def get_instances(self) -> List[Instance]:
-        self.download_data()
+    def get_instances(self, output_path: str) -> List[Instance]:
+        self.download_data(output_path)
         return self.filter_instances(self.read_instances())
 
 
 if __name__ == "__main__":
     scenario = EmpatheticDialoguesScenario()
-    scenario.output_path = "./benchmark_output/scenarios/empatheticdialogues"
-    instances = scenario.get_instances()
+    instances = scenario.get_instances(os.path.join(get_benchmark_output_path(), "scenarios/empatheticdialogues"))
     print(instances[100])

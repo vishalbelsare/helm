@@ -4,7 +4,17 @@ from typing import Dict, List
 
 from helm.common.general import ensure_file_downloaded
 from helm.common.hierarchical_logger import hlog
-from .scenario import Scenario, Instance, Reference, TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT, CORRECT_TAG, Input, Output
+from helm.benchmark.scenarios.scenario import (
+    Scenario,
+    Instance,
+    Reference,
+    TRAIN_SPLIT,
+    VALID_SPLIT,
+    TEST_SPLIT,
+    CORRECT_TAG,
+    Input,
+    Output,
+)
 
 
 class MMLUScenario(Scenario):
@@ -93,9 +103,9 @@ class MMLUScenario(Scenario):
                 instances.append(instance)
         return instances
 
-    def get_instances(self) -> List[Instance]:
+    def get_instances(self, output_path: str) -> List[Instance]:
         # Download the raw data
-        data_path: str = os.path.join(self.output_path, "data")
+        data_path: str = os.path.join(output_path, "data")
         self.download_mmlu(data_path)
 
         # Read all the instances

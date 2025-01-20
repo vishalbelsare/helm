@@ -2,9 +2,10 @@ import shutil
 import tempfile
 from typing import List
 
-from .tokenizer_service import TokenizerService
-from .window_service_factory import WindowServiceFactory
-from .test_utils import get_tokenizer_service, TEST_PROMPT
+from helm.common.cache_backend_config import BlackHoleCacheBackendConfig
+from helm.benchmark.window_services.tokenizer_service import TokenizerService
+from helm.benchmark.window_services.window_service_factory import WindowServiceFactory
+from helm.benchmark.window_services.test_utils import get_tokenizer_service, TEST_PROMPT
 
 
 class TestGPTNeoXWindowService:
@@ -65,8 +66,8 @@ class TestGPTNeoXWindowService:
 
     def setup_method(self):
         self.path: str = tempfile.mkdtemp()
-        service: TokenizerService = get_tokenizer_service(self.path)
-        self.window_service = WindowServiceFactory.get_window_service("together/gpt-neox-20b", service)
+        service: TokenizerService = get_tokenizer_service(self.path, BlackHoleCacheBackendConfig())
+        self.window_service = WindowServiceFactory.get_window_service("huggingface/gpt-neox-20b", service)
 
     def teardown_method(self, method):
         shutil.rmtree(self.path)
@@ -83,56 +84,56 @@ class TestGPTNeoXWindowService:
     def test_tokenize(self):
         assert self.window_service.tokenize(TEST_PROMPT) == [
             "The",
-            "ĠCenter",
-            "Ġfor",
-            "ĠResearch",
-            "Ġon",
-            "ĠFoundation",
-            "ĠModels",
-            "Ġ(",
+            " Center",
+            " for",
+            " Research",
+            " on",
+            " Foundation",
+            " Models",
+            " (",
             "CR",
             "FM",
             ")",
-            "Ġis",
-            "Ġan",
-            "Ġinter",
+            " is",
+            " an",
+            " inter",
             "disciplinary",
-            "Ġinitiative",
-            "Ġborn",
-            "Ġout",
-            "Ġof",
-            "Ġthe",
-            "ĠStanford",
-            "ĠInstitute",
-            "Ġfor",
-            "ĠHuman",
+            " initiative",
+            " born",
+            " out",
+            " of",
+            " the",
+            " Stanford",
+            " Institute",
+            " for",
+            " Human",
             "-",
             "Cent",
             "ered",
-            "ĠArt",
+            " Art",
             "ificial",
-            "ĠIntelligence",
-            "Ġ(",
+            " Intelligence",
+            " (",
             "HA",
             "I",
             ")",
-            "Ġthat",
-            "Ġaims",
-            "Ġto",
-            "Ġmake",
-            "Ġfundamental",
-            "Ġadvances",
-            "Ġin",
-            "Ġthe",
-            "Ġstudy",
+            " that",
+            " aims",
+            " to",
+            " make",
+            " fundamental",
+            " advances",
+            " in",
+            " the",
+            " study",
             ",",
-            "Ġdevelopment",
+            " development",
             ",",
-            "Ġand",
-            "Ġdeployment",
-            "Ġof",
-            "Ġfoundation",
-            "Ġmodels",
+            " and",
+            " deployment",
+            " of",
+            " foundation",
+            " models",
             ".",
         ]
 

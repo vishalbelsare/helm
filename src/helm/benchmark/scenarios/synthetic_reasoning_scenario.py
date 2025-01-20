@@ -25,7 +25,17 @@ The model hence is asked to do the following three tasks:
 import numpy as np
 from typing import List, Dict, Tuple
 
-from .scenario import Scenario, Instance, Reference, TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT, CORRECT_TAG, Input, Output
+from helm.benchmark.scenarios.scenario import (
+    Scenario,
+    Instance,
+    Reference,
+    TRAIN_SPLIT,
+    VALID_SPLIT,
+    TEST_SPLIT,
+    CORRECT_TAG,
+    Input,
+    Output,
+)
 
 ANIMALS = ["zebra", "cobra", "stork", "penguin", "shark", "lion", "buffalo", "whale", "seal", "eagle", "horse", "rat"]
 FRUITS = ["apple", "peach", "watermelon", "banana", "grape", "kiwi", "pear", "strawberry", "blueberry", "blackberry"]
@@ -139,7 +149,7 @@ class SyntheticReasoningScenario(Scenario):
         self.rng.shuffle(pattern)
         return pattern
 
-    def get_instances(self) -> List[Instance]:
+    def get_instances(self, output_path: str) -> List[Instance]:
         # We fix the seed for data generation to ensure reproducibility.
         # Read all the instances
         instances: List[Instance] = []

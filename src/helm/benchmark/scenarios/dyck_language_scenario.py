@@ -2,7 +2,16 @@ import numpy as np
 import random
 from typing import List, Tuple
 
-from .scenario import Scenario, Instance, Reference, TRAIN_SPLIT, TEST_SPLIT, CORRECT_TAG, Input, Output
+from helm.benchmark.scenarios.scenario import (
+    Scenario,
+    Instance,
+    Reference,
+    TRAIN_SPLIT,
+    TEST_SPLIT,
+    CORRECT_TAG,
+    Input,
+    Output,
+)
 
 
 class DyckLanguageScenario(Scenario):
@@ -207,7 +216,7 @@ class DyckLanguageScenario(Scenario):
                 instances.append(instance)
         return inputs, instances
 
-    def get_instances(self) -> List[Instance]:
+    def get_instances(self, output_path: str) -> List[Instance]:
         np.random.seed(self.random_seed)
         random.seed(self.random_seed)
 

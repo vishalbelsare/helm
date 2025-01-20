@@ -4,7 +4,7 @@ import csv
 from typing import List, Dict
 
 from helm.common.general import ensure_file_downloaded, ensure_directory_exists
-from .scenario import (
+from helm.benchmark.scenarios.scenario import (
     Scenario,
     Instance,
     Reference,
@@ -136,8 +136,8 @@ class NarrativeQAScenario(Scenario):
 
         return split_instances
 
-    def get_instances(self) -> List[Instance]:
-        data_path = os.path.join(self.output_path, "data")
+    def get_instances(self, output_path: str) -> List[Instance]:
+        data_path = os.path.join(output_path, "data")
         ensure_directory_exists(data_path)
 
         repo_url: str = "https://github.com/deepmind/narrativeqa/archive/master.zip"

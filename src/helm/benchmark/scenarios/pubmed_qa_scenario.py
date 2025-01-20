@@ -3,7 +3,15 @@ import os
 from typing import Dict, List
 
 from helm.common.general import ensure_directory_exists, ensure_file_downloaded
-from .scenario import Scenario, Instance, ALL_SPLITS, CORRECT_TAG, Reference, PassageQuestionInput, Output
+from helm.benchmark.scenarios.scenario import (
+    Scenario,
+    Instance,
+    ALL_SPLITS,
+    CORRECT_TAG,
+    Reference,
+    PassageQuestionInput,
+    Output,
+)
 
 
 class PubMedQAScenario(Scenario):
@@ -122,8 +130,8 @@ class PubMedQAScenario(Scenario):
 
     POSSIBLE_ANSWER_CHOICES: List[str] = ["yes", "no", "maybe"]
 
-    def get_instances(self) -> List[Instance]:
-        data_path: str = os.path.join(self.output_path, "data")
+    def get_instances(self, output_path: str) -> List[Instance]:
+        data_path: str = os.path.join(output_path, "data")
         ensure_directory_exists(data_path)
 
         instances: List[Instance] = []

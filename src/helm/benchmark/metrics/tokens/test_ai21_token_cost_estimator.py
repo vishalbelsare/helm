@@ -1,7 +1,7 @@
 from unittest.mock import Mock
 
 from helm.common.request import Request
-from .ai21_token_cost_estimator import AI21TokenCostEstimator
+from helm.benchmark.metrics.tokens.ai21_token_cost_estimator import AI21TokenCostEstimator
 
 
 class TestAI21TokenCostEstimator:
@@ -10,6 +10,8 @@ class TestAI21TokenCostEstimator:
 
     def test_estimate_tokens(self):
         request = Request(
+            model="ai21/jamba-instruct",
+            model_deployment="ai21/jamba-instruct",
             prompt="The Center for Research on Foundation Models (CRFM) is "
             "an interdisciplinary initiative born out of the Stanford "
             "Institute for Human-Centered Artificial Intelligence (HAI) "

@@ -4,7 +4,16 @@ import random
 from typing import List, Tuple
 
 from helm.common.general import ensure_file_downloaded, ensure_directory_exists
-from .scenario import Scenario, Instance, Reference, TRAIN_SPLIT, VALID_SPLIT, CORRECT_TAG, Input, Output
+from helm.benchmark.scenarios.scenario import (
+    Scenario,
+    Instance,
+    Reference,
+    TRAIN_SPLIT,
+    VALID_SPLIT,
+    CORRECT_TAG,
+    Input,
+    Output,
+)
 
 
 class QuACScenario(Scenario):
@@ -166,8 +175,8 @@ class QuACScenario(Scenario):
 
         return split_instances
 
-    def get_instances(self) -> List[Instance]:
-        data_path = os.path.join(self.output_path, "data")
+    def get_instances(self, output_path: str) -> List[Instance]:
+        data_path = os.path.join(output_path, "data")
         ensure_directory_exists(data_path)
 
         base_url: str = "https://s3.amazonaws.com/my89public/quac"

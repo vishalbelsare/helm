@@ -6,7 +6,17 @@ from typing import List, Any
 import datasets
 from datasets import load_dataset
 
-from .scenario import Scenario, Instance, Reference, CORRECT_TAG, TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT, Output, Input
+from helm.benchmark.scenarios.scenario import (
+    Scenario,
+    Instance,
+    Reference,
+    CORRECT_TAG,
+    TRAIN_SPLIT,
+    VALID_SPLIT,
+    TEST_SPLIT,
+    Output,
+    Input,
+)
 
 
 class TaskType:
@@ -368,10 +378,10 @@ class LEXTREMEScenario(Scenario):
         self.subsets = [subset] if subset != "all" else list(TASK_CODE_MAPPING.keys())
         self.random: random.Random = random.Random(42)
 
-    def get_instances_for_subset(self, config: str) -> List[Instance]:
+    def get_instances_for_subset(self, config: str, output_path: str) -> List[Instance]:
         task_code = TASK_CODE_MAPPING[config]
         # Load dataset
-        cache_dir = str(Path(self.output_path) / "data")
+        cache_dir = str(Path(output_path) / "data")
         dataset: Any = load_dataset(self.dataset_name, config, cache_dir=cache_dir)
 
         if task_code == TaskType.SLTC:
@@ -423,7 +433,7 @@ class LEXTREMEScenario(Scenario):
                 if "multi_eurlex" in config:
                     input_text = ast.literal_eval(input_text)
                     assert isinstance(input_text, dict)
-                    languages = list(input_text.keys())
+                    languages = list([lang for lang, content in input_text.items() if content is not None])
                     input_text = input_text[self.random.choice(languages)]  # just choose a random language
                 correct_references = [
                     Reference(output=Output(correct_label), tags=[CORRECT_TAG]) for correct_label in correct_labels
@@ -451,8 +461,8 @@ class LEXTREMEScenario(Scenario):
 
         return generate_instances(TRAIN_SPLIT) + generate_instances(VALID_SPLIT) + generate_instances(TEST_SPLIT)
 
-    def get_instances(self) -> List[Instance]:
+    def get_instances(self, output_path: str) -> List[Instance]:
         instances = []
         for subset in self.subsets:
-            instances.extend(self.get_instances_for_subset(subset))
+            instances.extend(self.get_instances_for_subset(subset, output_path))
         return instances

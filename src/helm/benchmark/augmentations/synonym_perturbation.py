@@ -10,11 +10,12 @@ from nltk.corpus import wordnet
 import spacy
 
 from helm.common.general import match_case, ensure_file_downloaded
-from .perturbation_description import PerturbationDescription
-from .perturbation import Perturbation
+from helm.benchmark.augmentations.perturbation_description import PerturbationDescription
+from helm.benchmark.augmentations.perturbation import TextPerturbation
+from helm.benchmark.runner import get_benchmark_output_path
 
 
-class SynonymPerturbation(Perturbation):
+class SynonymPerturbation(TextPerturbation):
     """
     Synonyms. For implementation details, see
     https://github.com/GEM-benchmark/NL-Augmenter/blob/main/nlaugmenter/transformations/synonym_substitution/transformation.py
@@ -40,10 +41,11 @@ class SynonymPerturbation(Perturbation):
     name: str = "synonym"
 
     # For downloading wordnet_synonyms.json
-    CODALAB_URI_TEMPLATE: str = "https://worksheets.codalab.org/rest/bundles/{bundle}/contents/blob/"
-    CODALAB_BUNDLE: str = "0x92a07ef9f82941e6a75b2f3b27961e8c"
     FILE_NAME: str = "wordnet_synonyms.json"
-    SOURCE_URI: str = CODALAB_URI_TEMPLATE.format(bundle=CODALAB_BUNDLE)
+    SOURCE_URI: str = (
+        "https://storage.googleapis.com/crfm-helm-public/source_datasets/"
+        "augmentations/synonym_perturbation/wordnet_synonyms.json"
+    )
 
     def __init__(self, prob: float):
         # Assign parameters to instance variables
@@ -56,7 +58,7 @@ class SynonymPerturbation(Perturbation):
             spacy.cli.download("en_core_web_sm")  # type: ignore
             self.spacy_model = spacy.load("en_core_web_sm")
 
-        output_dir = os.path.join("benchmark_output", "perturbations", self.name)
+        output_dir = os.path.join(get_benchmark_output_path(), "perturbations", self.name)
         Path(output_dir).mkdir(parents=True, exist_ok=True)
         nltk.data.path.append(output_dir)
         try:

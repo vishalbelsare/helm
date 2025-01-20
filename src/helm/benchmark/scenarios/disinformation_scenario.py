@@ -3,7 +3,16 @@ import os
 from typing import List, Dict, Optional
 
 from helm.common.general import ensure_file_downloaded
-from .scenario import Scenario, Instance, Reference, TRAIN_SPLIT, VALID_SPLIT, CORRECT_TAG, Input, Output
+from helm.benchmark.scenarios.scenario import (
+    Scenario,
+    Instance,
+    Reference,
+    TRAIN_SPLIT,
+    VALID_SPLIT,
+    CORRECT_TAG,
+    Input,
+    Output,
+)
 
 REITERATION_DATA_URL = "https://drive.google.com/uc?export=download&id=1uVJbsgPCHFAvH43I6SVvU3Ayo8dh-y_N"
 WEDGING_DATA_URL = "https://drive.google.com/uc?export=download&id=1kWB3_F4Tobc_oVGC_T-a5DHEh-AB4GTc"
@@ -144,7 +153,7 @@ class DisinformationScenario(Scenario):
 
         return instances
 
-    def get_instances(self) -> List[Instance]:
+    def get_instances(self, output_path: str) -> List[Instance]:
         if self.capability == "reiteration":
             data_url = REITERATION_DATA_URL
         elif self.capability == "wedging":
@@ -152,7 +161,7 @@ class DisinformationScenario(Scenario):
         else:
             raise ValueError(f"Unknown disinformation evaluation: {self.capability}")
 
-        data_path = os.path.join(self.output_path, self.capability)
+        data_path = os.path.join(output_path, self.capability)
         ensure_file_downloaded(source_url=data_url, target_path=data_path)
 
         data = []

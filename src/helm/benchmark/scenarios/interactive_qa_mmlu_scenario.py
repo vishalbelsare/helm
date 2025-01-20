@@ -2,8 +2,8 @@ import os
 from typing import List
 
 from helm.common.general import ensure_file_downloaded
-from .scenario import Instance, TRAIN_SPLIT, TEST_SPLIT
-from .mmlu_scenario import MMLUScenario
+from helm.benchmark.scenarios.scenario import Instance, TRAIN_SPLIT, TEST_SPLIT
+from helm.benchmark.scenarios.mmlu_scenario import MMLUScenario
 
 
 class InteractiveQAMMLUScenario(MMLUScenario):
@@ -32,9 +32,9 @@ class InteractiveQAMMLUScenario(MMLUScenario):
         assert subject in InteractiveQAMMLUScenario.VALID_SUBJECTS, f"Invalid subject for Interactive QA: {subject}"
         super().__init__(subject)
 
-    def get_instances(self) -> List[Instance]:
+    def get_instances(self, output_path: str) -> List[Instance]:
         # Download the MMLU data and the subsets for InteractiveQA
-        data_path: str = os.path.join(self.output_path, "data")
+        data_path: str = os.path.join(output_path, "data")
         self.download_mmlu(data_path)
 
         test_path: str = os.path.join(data_path, "test", InteractiveQAMMLUScenario.INTERACTIVE_QA_DIR)

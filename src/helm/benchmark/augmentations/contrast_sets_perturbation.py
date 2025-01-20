@@ -4,8 +4,8 @@ from random import Random
 from typing import List, Optional
 
 from helm.benchmark.scenarios.scenario import Instance, Reference, Input
-from .perturbation_description import PerturbationDescription
-from .perturbation import Perturbation
+from helm.benchmark.augmentations.perturbation_description import PerturbationDescription
+from helm.benchmark.augmentations.perturbation import Perturbation
 
 
 class ContrastSetsPerturbation(Perturbation):
@@ -81,6 +81,3 @@ class ContrastSetsPerturbation(Perturbation):
             references=perturbed_references,
             perturbation=description,
         )
-
-    def perturb(self, text: str, rng: Random) -> str:  # we need this since parent method is abstract
-        pass

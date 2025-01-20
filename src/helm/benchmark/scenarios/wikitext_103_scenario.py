@@ -4,7 +4,7 @@ from typing import List
 
 from helm.common.general import ensure_file_downloaded
 from helm.common.hierarchical_logger import hlog
-from .scenario import Scenario, Instance, TEST_SPLIT, Input
+from helm.benchmark.scenarios.scenario import Scenario, Instance, TEST_SPLIT, Input
 
 
 class Wikitext103Scenario(Scenario):
@@ -23,9 +23,9 @@ class Wikitext103Scenario(Scenario):
     description = "The WikiText language modeling dataset containing over 103 million words"
     tags = ["language_modeling"]
 
-    def get_instances(self) -> List[Instance]:
+    def get_instances(self, output_path: str) -> List[Instance]:
         # Download the raw data
-        data_path = os.path.join(self.output_path, "data")
+        data_path = os.path.join(output_path, "data")
         ensure_file_downloaded(
             source_url="https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-103-raw-v1.zip",
             target_path=data_path,

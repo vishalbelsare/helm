@@ -5,7 +5,17 @@ from typing import List, Tuple
 
 from helm.common.hierarchical_logger import hlog
 from helm.common.general import ensure_file_downloaded
-from .scenario import Scenario, Instance, Reference, TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT, CORRECT_TAG, Input, Output
+from helm.benchmark.scenarios.scenario import (
+    Scenario,
+    Instance,
+    Reference,
+    TRAIN_SPLIT,
+    VALID_SPLIT,
+    TEST_SPLIT,
+    CORRECT_TAG,
+    Input,
+    Output,
+)
 
 
 class EntityDataImputationScenario(Scenario):
@@ -41,8 +51,14 @@ class EntityDataImputationScenario(Scenario):
     def __init__(self, dataset: str, seed: int = 1234):
         super().__init__()
         self.datasets_paths = {
-            "Buy": "https://dbs.uni-leipzig.de/file/Abt-Buy.zip",
-            "Restaurant": "https://www.cs.utexas.edu/users/ml/riddle/data/restaurant.tar.gz",
+            "Buy": (
+                "https://storage.googleapis.com/crfm-helm-public/source_datasets/scenarios/"
+                "entity_data_imputation/Abt-Buy.zip"
+            ),
+            "Restaurant": (
+                "https://storage.googleapis.com/crfm-helm-public/source_datasets/scenarios/"
+                "entity_data_imputation/restaurant.tar.gz"
+            ),
         }
         # Columns to impute
         self.datasets_impute_col = {
@@ -110,8 +126,8 @@ class EntityDataImputationScenario(Scenario):
             res.append(f"{c}: {row[c]}".strip())
         return ". ".join(res)
 
-    def get_instances(self) -> List[Instance]:
-        data_path = Path(self.output_path) / "data" / self.dataset
+    def get_instances(self, output_path: str) -> List[Instance]:
+        data_path = Path(output_path) / "data" / self.dataset
         data_path.parent.mkdir(parents=True, exist_ok=True)
         ensure_file_downloaded(
             source_url=self.datasets_paths[self.dataset],

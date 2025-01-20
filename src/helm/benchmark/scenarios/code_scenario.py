@@ -48,15 +48,28 @@ APPS is a benchmark for code generation from natural language specifications.
 Each instance has 1) a problem description with examples (as what you get in
 programming competitions), 2) coding solutions, 3) test cases.
 """
+
 import io
 import json
 import os
+import sys
 from typing import List, Dict, Iterable, Optional, cast
 
 from helm.common.general import ensure_file_downloaded
 from helm.common.hierarchical_logger import hlog
-from .code_scenario_helper import run as run_reindent
-from .scenario import Scenario, Instance, Reference, TRAIN_SPLIT, VALID_SPLIT, TEST_SPLIT, CORRECT_TAG, Input, Output
+from helm.benchmark.scenarios.code_scenario_helper import run as run_reindent
+from helm.benchmark.scenarios.code_scenario_apps_pinned_file_order import apps_listdir_with_pinned_order
+from helm.benchmark.scenarios.scenario import (
+    Scenario,
+    Instance,
+    Reference,
+    TRAIN_SPLIT,
+    VALID_SPLIT,
+    TEST_SPLIT,
+    CORRECT_TAG,
+    Input,
+    Output,
+)
 
 
 class CodeReference(Reference):
@@ -127,6 +140,19 @@ def _read_and_preprocess_apps(target_path: str) -> List[CodeInstance]:
     Adapted from
         https://github.com/lxuechen/apps/blob/main/train/dataset_apps/APPSBaseDataset.py
     """
+    # Some versions of Python have a configurable maximum number of digits of integers that can be parsed
+    # from strings. This limit also applies to parsing integers in JSON. The default limit is 4300 digits.
+    #
+    # Reading APPS instances will fail with the default limit because the APPS dataset contains very large
+    # integers.
+    #
+    # The sys.set_int_max_str_digits() method can be used to increase the limit. This method exists if and
+    # only if the version of Python has a default limit.
+    #
+    # See: https://docs.python.org/3/library/stdtypes.html#int-max-str-digits
+    if hasattr(sys, "set_int_max_str_digits"):
+        sys.set_int_max_str_digits(100000)
+
     SINGLE_STR_LIMIT = 150000  # From original codebase.
 
     instances = []
@@ -135,7 +161,7 @@ def _read_and_preprocess_apps(target_path: str) -> List[CodeInstance]:
 
         num_problems = 0
         skipped_problems = []
-        for problem_name in os.listdir(split_dir):
+        for problem_name in apps_listdir_with_pinned_order(target_path, split_tag):
             problem_dir = os.path.join(split_dir, problem_name)
 
             question_fname = os.path.join(problem_dir, "question.txt")
@@ -275,10 +301,13 @@ class CodeScenario(Scenario):
 
         self.human_eval_hparams = dict(num_train_instances=0, num_val_instances=0, num_test_instances=164)
 
-    def get_instances(self) -> List[Instance]:
-        # By construction, self.output_path == 'benchmark_output/scenarios/code'.
+    def get_instances(self, output_path: str) -> List[Instance]:
+        # By construction, output_path == args.output_path + '/scenarios/code'
+        # where args.output_path is parsed from the command line argument.
+        # The default self.output_path here is '/benchmark_output/scenarios/ice'.
+        # See helm.benchmark.runner for more details about args.output_path.
         if self.dataset == "humaneval":
-            target_path = os.path.join(self.output_path, "HumanEval.jsonl")
+            target_path = os.path.join(output_path, "HumanEval.jsonl")
             ensure_file_downloaded(
                 source_url="https://github.com/openai/human-eval/raw/master/data/HumanEval.jsonl.gz",
                 target_path=target_path,
@@ -290,7 +319,7 @@ class CodeScenario(Scenario):
             # This dataset doesn't have a validation set.
             # Unclear how they do validation. Also not clarified in their paper.
             # `target_path` is the output folder, not the compressed file, since we unpack!
-            target_path = os.path.join(self.output_path, "APPS")
+            target_path = os.path.join(output_path, "APPS")
             ensure_file_downloaded(
                 source_url="https://people.eecs.berkeley.edu/~hendrycks/APPS.tar.gz",
                 target_path=target_path,

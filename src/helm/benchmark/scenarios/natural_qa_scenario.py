@@ -10,7 +10,7 @@ from helm.common.hierarchical_logger import htrack_block, hlog
 from typing import List, Dict
 
 from helm.common.general import ensure_file_downloaded, ensure_directory_exists, asdict_without_nones
-from .scenario import (
+from helm.benchmark.scenarios.scenario import (
     Scenario,
     Instance,
     Reference,
@@ -307,8 +307,8 @@ class NaturalQAScenario(Scenario):
             instances.append(instance)
         return instances
 
-    def get_instances(self) -> List[Instance]:
-        data_path = os.path.join(self.output_path, "data")
+    def get_instances(self, output_path: str) -> List[Instance]:
+        data_path = os.path.join(output_path, "data")
         ensure_directory_exists(data_path)
         random.seed(0)
 

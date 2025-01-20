@@ -4,7 +4,7 @@ from typing import List
 
 from helm.common.general import ensure_file_downloaded
 from helm.common.hierarchical_logger import hlog
-from .scenario import Scenario, Instance, TEST_SPLIT, Input
+from helm.benchmark.scenarios.scenario import Scenario, Instance, TEST_SPLIT, Input
 
 CODALAB_URI_TEMPLATE: str = (
     "https://worksheets.codalab.org/rest/bundles/0x31485f8c37ad481fb9f4e9bf7ccff6e5/contents/blob/"
@@ -35,9 +35,9 @@ class TwitterAAEScenario(Scenario):
         assert demographic in ["aa", "white"], f"Unsupported demographic: {demographic}"
         self.demographic: str = demographic
 
-    def get_instances(self) -> List[Instance]:
+    def get_instances(self, output_path: str) -> List[Instance]:
         # Download the raw data
-        data_path: str = os.path.join(self.output_path, f"{self.demographic}_tweets.csv")
+        data_path: str = os.path.join(output_path, f"{self.demographic}_tweets.csv")
         ensure_file_downloaded(
             source_url=CODALAB_URI_TEMPLATE.format(demographic=self.demographic),
             target_path=data_path,

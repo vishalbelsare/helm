@@ -2,13 +2,15 @@
 # Source: https://github.com/tingofurro/summac
 ###############################################
 
+from typing import Dict, List
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import nltk
 import numpy as np
+import numpy.typing as npt
 import torch
 import os
 import json
-from . import utils_misc
+from helm.benchmark.metrics.summac import utils_misc
 
 model_map = {
     "snli-base": {"model_card": "boychaboy/SNLI_roberta-base", "entailment_idx": 0, "contradiction_idx": 2},
@@ -48,7 +50,6 @@ class SummaCImager:
     def __init__(
         self, model_name="mnli", granularity="paragraph", use_cache=True, max_doc_sents=100, device="cuda", **kwargs
     ):
-
         self.grans = granularity.split("-")
 
         assert (
@@ -144,6 +145,7 @@ class SummaCImager:
 
         if self.model is None:
             self.load_nli()
+            assert self.model
 
         dataset = [
             {"premise": original_chunks[i], "hypothesis": generated_chunks[j], "doc_i": i, "gen_i": j}
@@ -151,7 +153,6 @@ class SummaCImager:
             for j in range(N_gen)
         ]
         for batch in utils_misc.batcher(dataset, batch_size=20):
-
             if self.model_name == "decomp":
                 batch_evids, batch_conts, batch_neuts = [], [], []
                 batch_json = [{"premise": d["premise"], "hypothesis": d["hypothesis"]} for d in batch]
@@ -178,9 +179,9 @@ class SummaCImager:
                     model_outputs = self.model(**batch_tokens)
 
                 batch_probs = torch.nn.functional.softmax(model_outputs["logits"], dim=-1)
-                batch_evids = batch_probs[:, self.entailment_idx].tolist()
-                batch_conts = batch_probs[:, self.contradiction_idx].tolist()
-                batch_neuts = batch_probs[:, self.neutral_idx].tolist()
+                batch_evids = batch_probs[:, self.entailment_idx].tolist()  # type: ignore
+                batch_conts = batch_probs[:, self.contradiction_idx].tolist()  # type: ignore
+                batch_neuts = batch_probs[:, self.neutral_idx].tolist()  # type: ignore
 
             for b, evid, cont, neut in zip(batch, batch_evids, batch_conts, batch_neuts):
                 image[0, b["doc_i"], b["gen_i"]] = evid
@@ -302,7 +303,7 @@ class SummaCConv(torch.nn.Module):
 
         full_histogram = []
         for i_gen in range(N_gen):
-            histos = []
+            histos: List[npt.NDArray] = []
 
             for i_depth in range(N_depth):
                 if (
@@ -316,32 +317,31 @@ class SummaCConv(torch.nn.Module):
                     histos.append(histo)
 
             if self.norm_histo:
-                histos = [[N_ori, N_gen]] + histos
+                histos = [np.array([N_ori, N_gen])] + histos
             histogram_row = np.concatenate(histos)
             full_histogram.append(histogram_row)
 
         n_rows_missing = self.n_rows - len(full_histogram)
         full_histogram += [[0.0] * self.full_size] * n_rows_missing
         full_histogram = full_histogram[: self.n_rows]
-        full_histogram = np.array(full_histogram)
-        return image, full_histogram
+        return image, np.array(full_histogram)
 
     def forward(self, originals, generateds, images=None):
         if images is not None:
             # In case they've been pre-computed.
-            histograms = []
+            histogram_list = []
             for image in images:
                 _, histogram = self.compute_histogram(image=image)
-                histograms.append(histogram)
+                histogram_list.append(histogram)
         else:
-            images, histograms = [], []
+            images, histogram_list = [], []
             for original, generated in zip(originals, generateds):
                 image, histogram = self.compute_histogram(original=original, generated=generated)
                 images.append(image)
-                histograms.append(histogram)
+                histogram_list.append(histogram)
 
-        N = len(histograms)
-        histograms = torch.FloatTensor(histograms).to(self.device)
+        N = len(histogram_list)
+        histograms = torch.FloatTensor(histogram_list).to(self.device)
 
         non_zeros = (torch.sum(histograms, dim=-1) != 0.0).long()
         seq_lengths = non_zeros.sum(dim=-1).tolist()
@@ -378,8 +378,8 @@ class SummaCConv(torch.nn.Module):
                     )
             else:
                 features.append(torch.FloatTensor([0.0, 0.0, 0.0]).unsqueeze(0))  # .cuda()
-        features = torch.cat(features)
-        logits = self.layer_final(features)
+        features_tensor = torch.cat(features)
+        logits = self.layer_final(features_tensor)
         histograms_out = [histogram.cpu().numpy() for histogram in histograms]
         return logits, histograms_out, images
 
@@ -450,7 +450,7 @@ class SummaCZS:
         return {"score": final_score, "image": image}
 
     def score(self, sources, generateds, **kwargs):
-        output = {"scores": [], "images": []}
+        output: Dict[str, List] = {"scores": [], "images": []}
         for source, gen in zip(sources, generateds):
             score = self.score_one(source, gen)
             output["scores"].append(score["score"])

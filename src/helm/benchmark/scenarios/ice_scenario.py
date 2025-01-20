@@ -4,7 +4,15 @@ from typing import List, Union
 from enum import Enum
 import pandas as pd
 
-from .scenario import Scenario, Instance, TEST_SPLIT, Input
+from helm.common.optional_dependencies import handle_module_not_found_error
+from helm.benchmark.scenarios.ice_scenario_pinned_file_order import listdir_with_pinned_file_order
+from helm.benchmark.scenarios.scenario import Scenario, Instance, TEST_SPLIT, Input
+
+try:
+    # pd.read_excel() uses xlrd
+    import xlrd  # noqa
+except ModuleNotFoundError as e:
+    handle_module_not_found_error(e, ["scenarios"])
 
 
 class ICESubset(Enum):
@@ -106,8 +114,12 @@ class ICEScenario(Scenario):
     """
     The International Corpus of English (ICE).
 
-    NOTE: This text cannot be downloaded
-    automatically. You must extract each subset zip file into /benchmark_output/scenarios/ice.
+    NOTE: This text cannot be downloaded automatically.
+    You must extract each subset zip file into args.output_path + '/scenarios/ice',
+    which is by default '/benchmark_output/scenarios/ice',
+    where args.output_path is parsed from the command line argument.
+    See helm.benchmark.runner for more details about args.output_path.
+
     The archives should extract into folders named according to the dictionary SUBSET_TO_DIRECTORY
     below.
 
@@ -393,7 +405,7 @@ class ICEScenario(Scenario):
         corpus_filenames = list(filter(lambda x: any([regex.match(x) for regex in regexes]), all_corpus_filenames))
         return sorted(corpus_filenames)
 
-    def get_instances(self, debug_cap: Union[int, None] = None) -> List[Instance]:
+    def get_instances(self, output_path: str) -> List[Instance]:
         instances: List[Instance] = []
 
         for subset in self.subset:
@@ -424,9 +436,13 @@ class ICEScenario(Scenario):
 
             can_filter = subset in list(METADATA_FORMAT.keys()) and self.gender
             selected_texts = (
-                self.filter_by_metadata(subset, os.path.join(data_path, "Headers"), os.listdir(corpus_path))
+                self.filter_by_metadata(
+                    subset,
+                    os.path.join(data_path, "Headers"),
+                    listdir_with_pinned_file_order(output_path, corpus_path),
+                )
                 if can_filter
-                else os.listdir(corpus_path)
+                else listdir_with_pinned_file_order(output_path, corpus_path)
             )
 
             for filename in selected_texts:
@@ -449,8 +465,5 @@ class ICEScenario(Scenario):
 
                 for t in preprocessed_texts:
                     instances.append(Instance(Input(text=t), references=[], split=TEST_SPLIT))
-
-                    if debug_cap and len(instances) >= debug_cap:
-                        return instances
 
         return instances

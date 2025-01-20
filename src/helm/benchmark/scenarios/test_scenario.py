@@ -1,13 +1,16 @@
-from helm.benchmark.run_specs import get_scenario_spec_tiny
-from .scenario import create_scenario, Scenario, Input, PassageQuestionInput
+from helm.benchmark.scenarios.scenario import ScenarioSpec, create_scenario, Scenario, Input, PassageQuestionInput
 
 
 class TestScenario:
     def setup_method(self, method):
-        self.scenario: Scenario = create_scenario(get_scenario_spec_tiny())
+        scenario_spec: ScenarioSpec = ScenarioSpec(
+            class_name="helm.benchmark.scenarios.simple_scenarios.Simple1Scenario",
+            args={"num_input_tokens": 5, "vocab_size": 20, "num_train_instances": 2, "num_test_instances": 2},
+        )
+        self.scenario: Scenario = create_scenario(scenario_spec)
 
     def test_render_lines(self):
-        instances = self.scenario.get_instances()
+        instances = self.scenario.get_instances(output_path="")
         assert self.scenario.render_lines(instances) == [
             "name: simple1",
             "description: A simple scenario",
@@ -34,6 +37,12 @@ class TestScenario:
             '  reference []: "-1"',
             "}",
         ]
+
+    def test_definition_path(self):
+        assert (
+            self.scenario.definition_path
+            == "https://github.com/stanford-crfm/helm/blob/main/src/helm/benchmark/scenarios/simple_scenarios.py"
+        )
 
 
 def test_input_equality():

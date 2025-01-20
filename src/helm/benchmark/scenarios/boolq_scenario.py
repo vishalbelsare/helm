@@ -3,7 +3,7 @@ import os
 from typing import List, Dict, Optional
 
 from helm.common.general import ensure_file_downloaded, ensure_directory_exists
-from .scenario import (
+from helm.benchmark.scenarios.scenario import (
     Scenario,
     Instance,
     Reference,
@@ -137,8 +137,8 @@ class BoolQScenario(Scenario):
                 split_instances.append(instance)
         return split_instances
 
-    def get_instances(self) -> List[Instance]:
-        data_path: str = os.path.join(self.output_path, "data")
+    def get_instances(self, output_path: str) -> List[Instance]:
+        data_path: str = os.path.join(output_path, "data")
         ensure_directory_exists(data_path)
 
         instances: List[Instance] = []

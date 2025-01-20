@@ -1,9 +1,20 @@
 import collections
+import os
 import typing
 from typing import Dict, List, Optional
 from datasets import load_dataset, DatasetDict
 
-from .scenario import Scenario, Instance, Reference, TRAIN_SPLIT, TEST_SPLIT, CORRECT_TAG, Input, Output
+from helm.common.general import ensure_directory_exists
+from helm.benchmark.scenarios.scenario import (
+    Scenario,
+    Instance,
+    Reference,
+    TRAIN_SPLIT,
+    TEST_SPLIT,
+    CORRECT_TAG,
+    Input,
+    Output,
+)
 
 
 def remove_boxed(string: str) -> Optional[str]:
@@ -352,9 +363,23 @@ class MATHScenario(Scenario):
         if use_chain_of_thought:
             assert not use_official_examples, "Cannot use official examples when use_chain_of_thought is True."
 
-    def get_instances(self) -> List[Instance]:
+    def get_instances(self, output_path: str) -> List[Instance]:
         dataset = {}
-        data = typing.cast(DatasetDict, load_dataset("competition_math", ignore_verifications=True))
+        cache_dir = os.path.join(output_path, "data")
+        ensure_directory_exists(cache_dir)
+        data = (
+            typing.cast(
+                DatasetDict,
+                load_dataset(
+                    "hendrycks/competition_math",
+                    trust_remote_code=True,
+                    cache_dir=cache_dir,
+                    revision="71b758ecc688b2822d07ffa7f8393299f1dc7cac",
+                ),
+            )
+            .sort("problem")
+            .shuffle(seed=42)
+        )
 
         def group_by_key(dataset_list, key):
             dataset_per_key = collections.defaultdict(list)

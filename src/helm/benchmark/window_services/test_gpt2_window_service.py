@@ -2,15 +2,20 @@ import shutil
 import tempfile
 
 from helm.benchmark.window_services.tokenizer_service import TokenizerService
-
-from .test_utils import get_tokenizer_service, TEST_PROMPT, GPT2_TEST_TOKENS, GPT2_TEST_TOKEN_IDS
-from .window_service_factory import WindowServiceFactory
+from helm.common.cache_backend_config import BlackHoleCacheBackendConfig
+from helm.benchmark.window_services.test_utils import (
+    get_tokenizer_service,
+    TEST_PROMPT,
+    GPT2_TEST_TOKENS,
+    GPT2_TEST_TOKEN_IDS,
+)
+from helm.benchmark.window_services.window_service_factory import WindowServiceFactory
 
 
 class TestGPT2WindowService:
     def setup_method(self):
         self.path: str = tempfile.mkdtemp()
-        service: TokenizerService = get_tokenizer_service(self.path)
+        service: TokenizerService = get_tokenizer_service(self.path, BlackHoleCacheBackendConfig())
         self.window_service = WindowServiceFactory.get_window_service("huggingface/gpt2", service)
 
     def teardown_method(self, method):

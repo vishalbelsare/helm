@@ -1,16 +1,62 @@
 # Models
 
-{% for organization, models in models_by_organization().items() %}
+## Text Models
 
-## {{ organization }}
+{% for tag in ["TEXT_MODEL_TAG", "CODE_MODEL_TAG"] %}
+
+{% for organization, models in models_by_organization_with_tag(tag).items() %}
+
+### {{ organization }}
 
 {% for model in models %}
 
-### {{ model.display_name }}
+#### {{ model.display_name }} &mdash; `{{ model.name }}`
 
-- Name: `{{ model.name }}`
-- Group: `{{ model.group }}`
-- Tags: {{ render_model_tags(model) }}
+{{ model.description }}
+
+{% endfor %}
+{% endfor %}
+{% endfor %}
+
+## Vision-Language Models
+
+{% for organization, models in models_by_organization_with_tag("VISION_LANGUAGE_MODEL_TAG").items() %}
+
+### {{ organization }}
+
+{% for model in models %}
+
+#### {{ model.display_name }} &mdash; `{{ model.name }}`
+
+{{ model.description }}
+
+{% endfor %}
+{% endfor %}
+
+## Text-to-image Models
+
+{% for organization, models in models_by_organization_with_tag("TEXT_TO_IMAGE_MODEL_TAG").items() %}
+
+### {{ organization }}
+
+{% for model in models %}
+
+#### {{ model.display_name }} &mdash; `{{ model.name }}`
+
+{{ model.description }}
+
+{% endfor %}
+{% endfor %}
+
+## Audio-Language Models
+
+{% for organization, models in models_by_organization_with_tag("AUDIO_LANGUAGE_MODEL_TAG").items() %}
+
+### {{ organization }}
+
+{% for model in models %}
+
+#### {{ model.display_name }} &mdash; `{{ model.name }}`
 
 {{ model.description }}
 

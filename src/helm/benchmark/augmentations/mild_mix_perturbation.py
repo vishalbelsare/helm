@@ -1,14 +1,14 @@
 from random import Random
 
-from .perturbation_description import PerturbationDescription
-from .perturbation import Perturbation
-from .lowercase_perturbation import LowerCasePerturbation
-from .contraction_expansion_perturbation import ContractionPerturbation
-from .space_perturbation import SpacePerturbation
-from .misspelling_perturbation import MisspellingPerturbation
+from helm.benchmark.augmentations.perturbation_description import PerturbationDescription
+from helm.benchmark.augmentations.perturbation import TextPerturbation
+from helm.benchmark.augmentations.lowercase_perturbation import LowerCasePerturbation
+from helm.benchmark.augmentations.contraction_expansion_perturbation import ContractionPerturbation
+from helm.benchmark.augmentations.space_perturbation import SpacePerturbation
+from helm.benchmark.augmentations.misspelling_perturbation import MisspellingPerturbation
 
 
-class MildMixPerturbation(Perturbation):
+class MildMixPerturbation(TextPerturbation):
     """
     Canonical robustness perturbation that composes several perturbations.
     These perturbations are chosen to be reasonable.
